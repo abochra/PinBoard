@@ -9,10 +9,10 @@ TME-9:
     pobj.pinboard.document.test.ClipRectTest
     pobj.pinboard.document.test.BoardTest
     pobj.pinboard.document.test.ClipEllipseTest
-	pobj.pinboard.document.test.ClipHeartTest
+	  pobj.pinboard.document.test.ClipHeartTest
     pobj.pinboard.editor.tools.test.ToolRectTest
     pobj.pinboard.editor.tools.test.ToolEllipseTest
-	pobj.pinboard.editor.tools.test.ToolHeartTest
+  	pobj.pinboard.editor.tools.test.ToolHeartTest
   artifacts:
     reports:
       junit: report.xml
