@@ -14,19 +14,23 @@ import pobj.pinboard.editor.tools.Tool;
 import pobj.pinboard.editor.tools.ToolEllipse;
 import pobj.pinboard.editor.tools.ToolHeart;
 import pobj.pinboard.editor.tools.ToolRect;
+import pobj.pinboard.editor.tools.ToolSelection;
 
-public class EditorWindow implements EditorInterface{
+public class EditorWindow implements EditorInterface, ClipboardListener{
 	private Stage stage;
 	private Board board;
 	private Tool outil;
 	private Canvas canvas;
 	private Label statut;
+	private Selection selection;
+	private MenuItem paste;
 	
 	public EditorWindow(Stage stage) {
 		this.stage = stage;
 		this.board = new Board();
 		this.stage.setTitle("PinBoard");
 		this.outil = new ToolRect();
+		this.selection = new Selection();
 		
 		VBox vbox = new VBox();
 		MenuBar menu = menu();
@@ -42,6 +46,11 @@ public class EditorWindow implements EditorInterface{
 		
 		Scene scene = new Scene(vbox);
 		this.stage.setScene(scene);
+		
+		Clipboard.getInstance().addListener(this);
+		stage.setOnCloseRequest(e -> {
+            Clipboard.getInstance().removeListener(this);
+        });
 		stage.show();
 		draw();
 	}
@@ -58,6 +67,24 @@ public class EditorWindow implements EditorInterface{
 		file.getItems().addAll(nv_file, new SeparatorMenuItem(), close_file);
 		
 		Menu edit = new Menu("Edit");
+		MenuItem copy = new MenuItem("Copy");
+		copy.setOnAction((e) -> Clipboard.getInstance().copyToClipboard(selection.getContents()));
+		
+		paste = new MenuItem("Paste");
+		paste.setOnAction((e) -> {
+			board.addClip(Clipboard.getInstance().copyFromClipboard());
+			draw();
+		});
+		paste.setDisable(Clipboard.getInstance().isEmpty());
+		
+		MenuItem delete = new MenuItem("Delete");
+		delete.setOnAction((e) -> {
+			board.removeClip(selection.getContents());
+			selection.clear();
+			draw();
+		});
+		
+		edit.getItems().addAll(copy, paste, delete);
 		
 		Menu tools = new Menu("Tools");
 		
@@ -65,7 +92,12 @@ public class EditorWindow implements EditorInterface{
 		rect.setOnAction((e) -> outil = new ToolRect());
 		MenuItem ell = new MenuItem("Ellipse");
 		ell.setOnAction((e) -> outil = new ToolEllipse());
-		tools.getItems().addAll(rect, ell);
+		MenuItem heart = new MenuItem("Heart");
+        heart.setOnAction((e) -> outil = new ToolHeart());
+        MenuItem select = new MenuItem("Select");
+        select.setOnAction((e) -> outil = new ToolSelection());
+		
+		tools.getItems().addAll(rect, ell, heart, select);
 		
 		menubar.getMenus().addAll(file, edit, tools);
 		
@@ -82,7 +114,10 @@ public class EditorWindow implements EditorInterface{
 		Button coeur = new Button("Coeur");
 		coeur.setOnAction((e) -> outil = new ToolHeart());
 		
-		ToolBar bar = new ToolBar(rect, ellipse, coeur); 
+		Button select = new Button("Select");
+		select.setOnAction((e) -> outil = new ToolSelection());
+		
+		ToolBar bar = new ToolBar(rect, ellipse, coeur, select); 
 		
 		return bar;
 	}
@@ -108,12 +143,16 @@ public class EditorWindow implements EditorInterface{
 	@Override
 	public Selection getSelection() {
 		// TODO Auto-generated method stub
-		return null;
+		return selection;
 	}
 
 	@Override
 	public CommandStack getUndoStack() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	
+	public void clipboardChanged() {
+		this.paste.setDisable(Clipboard.getInstance().isEmpty());
 	}
 }
