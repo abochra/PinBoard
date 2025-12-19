@@ -5,6 +5,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import pobj.pinboard.document.ClipRect;
 import pobj.pinboard.editor.EditorInterface;
+import pobj.pinboard.editor.commands.CommandAdd;
 
 public class ToolRect implements Tool {
 	private double x_debut;
@@ -50,7 +51,11 @@ public class ToolRect implements Tool {
 			
 			if (right - left > 1 && bottom - top > 1) {
 				ClipRect new_rect = new ClipRect(left, top, right, bottom, Color.PINK);
-				i.getBoard().addClip(new_rect);
+				CommandAdd cmd = new CommandAdd(i, new_rect);
+				cmd.execute();
+				if (i.getUndoStack() != null) {
+					i.getUndoStack().addCommand(cmd);
+				}
 			}
 			
 			dessine = false;

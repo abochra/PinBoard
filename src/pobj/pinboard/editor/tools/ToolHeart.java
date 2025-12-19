@@ -6,6 +6,7 @@ import javafx.scene.paint.Color;
 import pobj.pinboard.document.ClipEllipse;
 import pobj.pinboard.document.ClipHeart;
 import pobj.pinboard.editor.EditorInterface;
+import pobj.pinboard.editor.commands.CommandAdd;
 
 public class ToolHeart implements Tool {
 	private double x_debut;
@@ -51,7 +52,11 @@ public class ToolHeart implements Tool {
 			
 			if (right - left > 1 && bottom - top > 1) {
 				ClipHeart new_hrt = new ClipHeart(left, top, right, bottom, Color.RED);
-				i.getBoard().addClip(new_hrt);
+				CommandAdd cmd = new CommandAdd(i, new_hrt);
+				cmd.execute();
+				if (i.getUndoStack() != null) {
+					i.getUndoStack().addCommand(cmd);
+				}
 			}
 			
 			dessine = false;

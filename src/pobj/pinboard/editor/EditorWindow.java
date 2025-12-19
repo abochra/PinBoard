@@ -1,6 +1,9 @@
 package pobj.pinboard.editor;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
@@ -8,8 +11,15 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import pobj.pinboard.document.Board;
+import pobj.pinboard.document.Clip;
+import pobj.pinboard.document.ClipGroup;
+import pobj.pinboard.document.Composite;
+import pobj.pinboard.editor.commands.CommandAdd;
+import pobj.pinboard.editor.commands.CommandGroup;
+import pobj.pinboard.editor.commands.CommandUngroup;
 import pobj.pinboard.editor.tools.Tool;
 import pobj.pinboard.editor.tools.ToolEllipse;
 import pobj.pinboard.editor.tools.ToolHeart;
@@ -24,6 +34,9 @@ public class EditorWindow implements EditorInterface, ClipboardListener{
 	private Label statut;
 	private Selection selection;
 	private MenuItem paste;
+	private MenuItem redo;
+	private MenuItem undo;
+	private CommandStack pile;
 	
 	public EditorWindow(Stage stage) {
 		this.stage = stage;
@@ -31,6 +44,7 @@ public class EditorWindow implements EditorInterface, ClipboardListener{
 		this.stage.setTitle("PinBoard");
 		this.outil = new ToolRect();
 		this.selection = new Selection();
+		this.pile = new CommandStack();
 		
 		VBox vbox = new VBox();
 		MenuBar menu = menu();
@@ -67,12 +81,32 @@ public class EditorWindow implements EditorInterface, ClipboardListener{
 		file.getItems().addAll(nv_file, new SeparatorMenuItem(), close_file);
 		
 		Menu edit = new Menu("Edit");
+		
+		undo = new MenuItem("Undo");
+		undo.setOnAction((e) -> {
+			pile.undo();
+			updateMenuState();
+			draw();
+		});
+		undo.setDisable(true);
+		
+		redo = new MenuItem("Redo");
+		redo.setOnAction((e) -> {
+			pile.redo();
+			updateMenuState();
+			draw();
+		});
+		redo.setDisable(true);
+		
 		MenuItem copy = new MenuItem("Copy");
 		copy.setOnAction((e) -> Clipboard.getInstance().copyToClipboard(selection.getContents()));
 		
 		paste = new MenuItem("Paste");
 		paste.setOnAction((e) -> {
-			board.addClip(Clipboard.getInstance().copyFromClipboard());
+			CommandAdd cmd = new CommandAdd(this, Clipboard.getInstance().copyFromClipboard());
+			cmd.execute();
+			pile.addCommand(cmd);
+			updateMenuState();
 			draw();
 		});
 		paste.setDisable(Clipboard.getInstance().isEmpty());
@@ -84,7 +118,30 @@ public class EditorWindow implements EditorInterface, ClipboardListener{
 			draw();
 		});
 		
-		edit.getItems().addAll(copy, paste, delete);
+		MenuItem group = new MenuItem("Group");
+		group.setOnAction((e) -> {
+			if (selection.getContents().size() >= 2) {
+				CommandGroup cmd = new CommandGroup(this, selection.getContents());
+				cmd.execute();
+				pile.addCommand(cmd);
+				updateMenuState();
+				draw();
+			}
+		});
+		
+		MenuItem ungroup = new MenuItem("Ungroup");
+		ungroup.setOnAction((e)-> {
+			if (!selection.getContents().isEmpty() && selection.getContents().get(0) instanceof Composite) {
+                CommandUngroup cmd = new CommandUngroup(this, (Composite) selection.getContents().get(0));
+                cmd.execute();
+                pile.addCommand(cmd);
+                updateMenuState();
+                draw();
+            }
+		});
+		
+		edit.getItems().addAll(undo, redo, copy, paste, delete, group, ungroup);
+		
 		
 		Menu tools = new Menu("Tools");
 		
@@ -111,15 +168,20 @@ public class EditorWindow implements EditorInterface, ClipboardListener{
 		Button ellipse = new Button("Ellipse");
 		ellipse.setOnAction((e) -> outil = new ToolEllipse());
 		
-		Button coeur = new Button("Coeur");
-		coeur.setOnAction((e) -> outil = new ToolHeart());
+		Button heart = new Button("Heart");
+		heart.setOnAction((e) -> outil = new ToolHeart());
 		
 		Button select = new Button("Select");
 		select.setOnAction((e) -> outil = new ToolSelection());
 		
-		ToolBar bar = new ToolBar(rect, ellipse, coeur, select); 
+		ToolBar bar = new ToolBar(rect, ellipse, heart, select); 
 		
 		return bar;
+	}
+	
+	public void updateMenuState() {
+		undo.setDisable(pile.isUndoEmpty());
+		redo.setDisable(pile.isRedoEmpty());
 	}
 	
 	private void setCanvas() {
@@ -149,7 +211,7 @@ public class EditorWindow implements EditorInterface, ClipboardListener{
 	@Override
 	public CommandStack getUndoStack() {
 		// TODO Auto-generated method stub
-		return null;
+		return pile;
 	}
 	
 	public void clipboardChanged() {

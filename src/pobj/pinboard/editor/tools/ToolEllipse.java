@@ -6,6 +6,7 @@ import javafx.scene.paint.Color;
 import pobj.pinboard.document.ClipEllipse;
 import pobj.pinboard.document.ClipRect;
 import pobj.pinboard.editor.EditorInterface;
+import pobj.pinboard.editor.commands.CommandAdd;
 
 public class ToolEllipse implements Tool {
 	private double x_debut;
@@ -51,7 +52,11 @@ public class ToolEllipse implements Tool {
 			
 			if (right - left > 1 && bottom - top > 1) {
 				ClipEllipse new_ell = new ClipEllipse(left, top, right, bottom, Color.BEIGE);
-				i.getBoard().addClip(new_ell);
+				CommandAdd cmd = new CommandAdd(i, new_ell);
+				cmd.execute();
+				if (i.getUndoStack() != null) {
+					i.getUndoStack().addCommand(cmd);
+				}
 			}
 			
 			dessine = false;
