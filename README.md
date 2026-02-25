@@ -1,14 +1,36 @@
-# POBJ Arc 4 : Éditeur graphique (TME 9, 10 et 11)
+# 🎨 PinBoard - Éditeur de Dessins Vectoriels (JavaFX)
 
-### Support de TME du cours programmation par objets (LU3IN002), Licence 3, Sorbonne Université, Paris, France.
+## 📝 Présentation du Projet
+**PinBoard** est un éditeur graphique robuste développé dans le cadre du cursus de Sorbonne Université. L'objectif principal était de concevoir une architecture logicielle hautement **extensible** en appliquant les principes de la programmation orientée objet et plusieurs Design Patterns académiques.
 
-Instructions succinctes de rendu :
-* assurez-vous que votre binôme et votre chargé de TME sont membres du projet, avec pour rôle _Maintainer_ ;
-* ajoutez au projet toutes les classes Java demandées par l'énoncé ;
-* assurez-vous d'avoir synchronisé votre copie locale avec le projet GitLab : clic droit sur le projet, puis _Team > Commit_ dans Eclipse, ou `git add`, `git commit` et `git push` en ligne de commande ;
-* assurez-vous que les tests unitaires de l'intégration continue sous GitLab fonctionnent : _Build > Pipelines_ sur la page du projet GitLab ;
-* faites une _release_ : allez dans _Deploy > Releases_ sur la page du projet GitLab et cliquez sur _Create new release_ ; choisissez pour nom de tag _rendu-initial-tmeX_ ou _rendu-final-tmeX_ (avec _X_ le numéro du TME) ; mettez la réponse aux questions demandées dans le champ _Release notes_ (vous pouvez également y déposer des fichiers) et cliquez sur _Create release_.
+L'application permet de manipuler des planches de dessin (Boards) sur lesquelles on peut ajouter, sélectionner, déplacer et grouper des formes géométriques.
 
-Voir les énoncés de TME et les instructions détaillées de rendu sur le [Moodle du cours](https://moodle-sciences-25.sorbonne-universite.fr/).
+## 🏗️ Architecture & Design Patterns
+Le projet repose sur une séparation stricte entre le **Modèle** (représentation des données) et la **Vue** (interface graphique).
 
-L'intégration continue exécute le script `.gitlab-ci.yml`, qui précise la liste des classes de test unitaire. Vous pouvez ajouter vos propres tests à cette liste.
+| Design Pattern | Application dans le projet |
+| :--- | :--- |
+| **Stratégie (Strategy)** | Utilisé pour la gestion des outils (`Tool`). On change dynamiquement le comportement de la souris selon l'outil sélectionné (Sélecteur, Rectangle, Ellipse, Cœur). |
+| **Composite** | Implémenté via `ClipGroup`. Un groupe d'objets est lui-même un `Clip`, permettant de manipuler des ensembles de formes comme une entité unique. |
+| **Commande (Command)** | Utilisé pour le système **Undo/Redo**. Chaque action (déplacement, création, suppression) est encapsulée dans un objet commande. |
+| **Observateur (Observer)** | La fenêtre d'édition écoute les changements du modèle (`Board`) pour mettre à jour l'affichage en temps réel. |
+| **Singleton** | Appliqué au presse-papier (`Clipboard`) pour permettre le copier-coller entre différentes fenêtres de l'application. |
+
+## 🌟 Mon Extension : La Forme "Cœur"
+En plus des fonctionnalités de base (Rectangles, Ellipses), j'ai enrichi l'éditeur avec une nouvelle forme géométrique :
+- **ClipHeart** : Une classe implémentant l'interface `Clip` utilisant des courbes de Bézier pour le rendu.
+- **ToolHeart** : Un outil dédié permettant de dessiner des cœurs par cliquer-glisser, parfaitement intégré à la barre d'outils existante.
+- Elle supporte toutes les opérations standards : changement de couleur, redimensionnement, déplacement et groupement.
+
+## 🚀 Fonctionnalités Clés
+- **Édition riche** : Ajout de formes, sélection simple et multiple (touche Shift).
+- **Manipulation** : Déplacement à la souris, suppression, groupement/dégroupement.
+- **Couleurs** : Palette interactive pour modifier le remplissage des formes.
+- **Persistance** : Sauvegarde et chargement des dessins via la sérialisation Java.
+- **Historique** : Annulation et rétablissement illimités des actions.
+
+## 🛠️ Installation
+1. Pré-requis : JDK 11+ et JavaFX.
+2. Compilation :
+   ```bash
+   mvn clean install
